@@ -24,4 +24,12 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        // Docker dev env solution for CORS errors
+        host: '0.0.0.0',
+        hmr: {
+            host: '127.0.0.1',
+        },
+        port: 5173,
+    },
 });
