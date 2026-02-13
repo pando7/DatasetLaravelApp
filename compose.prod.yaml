@@ -49,30 +49,34 @@ services:
     # this service will not start until the 'postgres' service passes its health check.
     # This prevents the application from trying to connect to the database before it's ready.
     depends_on:
-      mariadb:
+      postgres:
         condition: service_healthy
 
-  mariadb:
-    image: mariadb:latest
-    container_name: mariadb-compose
-    volumes:
-      - mariadb_data:/var/lib/mysql
-      - mariadb_logs:/var/log/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ROOT_HOST: '${DB_HOST}'
-      MYSQL_DATABASE: '${DB_DATABASE}'
-      MYSQL_USER: '${DB_USERNAME}'
-      MYSQL_PASSWORD: '${DB_PASSWORD}'
+  postgres:
+    image: postgres:18.1
+    restart: unless-stopped
+    user: postgres
     ports:
-      - "3306:3306"
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data-production:/var/lib/postgresql
     networks:
       - laravel-production
+    # Health check for PostgreSQL
+    # -----------------------------------------------------------
+    # Health checks allow Docker to determine if a service is operational.
+    # The 'pg_isready' command checks if PostgreSQL is ready to accept connections.
+    # This prevents dependent services from starting before the database is ready.
+    # -----------------------------------------------------------
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "pg_isready"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   redis:
     image: redis:alpine
@@ -99,9 +103,6 @@ networks:
   laravel-production:
 
 volumes:
-  mariadb_data:
-    driver: local
-  mariadb_logs:
-    driver: local
+  postgres-data-production:
   laravel-storage-production:
   laravel-public-assets:

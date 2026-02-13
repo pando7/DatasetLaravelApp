@@ -42,7 +42,7 @@ services:
     networks:
       - laravel-development
     depends_on:
-      mariadb:
+      postgres:
         condition: service_started  # Wait for postgres to start
 
   workspace:
@@ -70,27 +70,18 @@ services:
     networks:
       - laravel-development
 
-  mariadb:
-    image: mariadb:latest
-    container_name: mariadb-compose
-    volumes:
-      - mariadb_data:/var/lib/mysql
-      - mariadb_logs:/var/log/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ROOT_HOST: '${DB_HOST}'
-      MYSQL_DATABASE: '${DB_DATABASE}'
-      MYSQL_USER: '${DB_USERNAME}'
-      MYSQL_PASSWORD: '${DB_PASSWORD}'
+  postgres:
+    image: postgres:18.1
     ports:
-      - "3306:3306"
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data-development:/var/lib/postgresql
     networks:
       - laravel-development
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
 
   redis:
     image: redis:alpine
@@ -104,12 +95,12 @@ services:
     ports:
       - "8080:80"
     environment:
-      ADMINER_DRIVER: server        # Database driver
-      ADMINER_SERVER: mariadb       # Database host
+      ADMINER_DRIVER: pgsql
+      ADMINER_SERVER: postgres
       ADMINER_USERNAME: ${DB_USERNAME}
       ADMINER_PASSWORD: ${DB_PASSWORD}
       ADMINER_DB: ${DB_DATABASE}
-      ADMINER_AUTOLOGIN: 1          # This attempts to auto-login
+      ADMINER_AUTOLOGIN: 1
     networks:
       - laravel-development
 
@@ -117,7 +108,4 @@ networks:
   laravel-development:
 
 volumes:
-  mariadb_data:
-    driver: local
-  mariadb_logs:
-    driver: local
+  postgres-data-development:
