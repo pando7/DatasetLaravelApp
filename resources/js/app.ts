@@ -9,6 +9,12 @@ import { initializeTheme } from './composables/useAppearance';
 import { createBootstrap } from 'bootstrap-vue-next'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
 
+// Import regular Bootstrap 5
+import 'bootstrap/dist/js/bootstrap.bundle.js';
+
+// Mode dependencies for AdminLTE
+import '@popperjs/core';
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
